@@ -1,0 +1,11 @@
+[Unit]
+Description=Run precompute script in Docker
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/path/to/ecommerce
+ExecStart=/usr/local/bin/docker-compose -f /path/to/ecommerce/docker-compose.prod.yml run --rm backend python scripts/precompute.py
+
+[Install]
+WantedBy=multi-user.target

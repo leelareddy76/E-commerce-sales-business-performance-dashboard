@@ -1,0 +1,13 @@
+pandas>=1.5.0
+numpy>=1.23.0
+matplotlib>=3.5.0
+seaborn>=0.12.0
+jupyter
+streamlit
+plotly
+fastapi
+uvicorn[standard]
+requests
+pyarrow
+pytest
+prometheus-fastapi-instrumentator

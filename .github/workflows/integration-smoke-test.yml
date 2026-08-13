@@ -1,0 +1,67 @@
+name: Integration Smoke Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Precompute caches
+        run: python scripts/precompute.py
+
+      - name: Start backend (uvicorn)
+        run: |
+          python -m uvicorn app.backend:app --host 127.0.0.1 --port 8000 > backend.log 2>&1 &
+
+      - name: Start Streamlit UI
+        run: |
+          python -m streamlit run app/streamlit_app.py --server.port 8501 --server.address 127.0.0.1 > streamlit.log 2>&1 &
+
+      - name: Wait for services
+        run: |
+          python - <<'PY'
+          import time, sys, requests
+          def wait(url, timeout=30):
+              end = time.time() + timeout
+              while time.time() < end:
+                  try:
+                      r = requests.get(url, timeout=3)
+                      if r.status_code == 200:
+                          print(url, 'ready')
+                          return
+                  except Exception:
+                      pass
+                  time.sleep(0.5)
+              print('Timed out waiting for', url)
+              sys.exit(2)
+
+          wait('http://127.0.0.1:8000/kpis', timeout=20)
+          wait('http://127.0.0.1:8501', timeout=30)
+          PY
+
+      - name: Run smoke test
+        run: python scripts/integration_smoke.py
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs
+          path: |
+            backend.log
+            streamlit.log

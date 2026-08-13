@@ -1,0 +1,13 @@
+[Unit]
+Description=Ecommerce Docker Compose Service
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/path/to/ecommerce
+ExecStart=/usr/local/bin/docker-compose -f /path/to/ecommerce/docker-compose.prod.yml up -d
+ExecStop=/usr/local/bin/docker-compose -f /path/to/ecommerce/docker-compose.prod.yml down
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
